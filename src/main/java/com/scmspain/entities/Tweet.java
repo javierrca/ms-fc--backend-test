@@ -2,6 +2,8 @@ package com.scmspain.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
@@ -17,7 +19,11 @@ public class Tweet {
     @Column (nullable=true)
     private Long pre2015MigrationStatus = 0L;
 
-    public Tweet() {
+    @Column (nullable=true)
+    @Enumerated(EnumType.STRING)
+    private TweetStatus status;
+
+	public Tweet() {
     }
 
     public Long getId() {
@@ -52,4 +58,12 @@ public class Tweet {
         this.pre2015MigrationStatus = pre2015MigrationStatus;
     }
 
+    public TweetStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(TweetStatus status) {
+		this.status = status;
+	}
+	
 }

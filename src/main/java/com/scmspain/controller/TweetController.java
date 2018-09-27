@@ -1,11 +1,13 @@
 package com.scmspain.controller;
 
+import com.scmspain.controller.command.DiscardTweetCommand;
 import com.scmspain.controller.command.PublishTweetCommand;
 import com.scmspain.entities.Tweet;
 import com.scmspain.services.TweetService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -29,6 +31,14 @@ public class TweetController {
         this.tweetService.publishTweet(publishTweetCommand.getPublisher(), publishTweetCommand.getTweet());
     }
 
+    
+    @PostMapping("/discarded")
+    @ResponseStatus(CREATED)
+    public void discardTweet(@RequestBody DiscardTweetCommand discardTweetCommand) {
+        this.tweetService.discardTweet(new Long(discardTweetCommand.getTweet()));
+    }
+
+    
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(BAD_REQUEST)
     @ResponseBody

@@ -1,6 +1,8 @@
 package com.scmspain.services;
 
 import com.scmspain.entities.Tweet;
+import com.scmspain.entities.TweetStatus;
+
 import org.springframework.boot.actuate.metrics.writer.Delta;
 import org.springframework.boot.actuate.metrics.writer.MetricWriter;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,10 @@ public class TweetService {
       Result - recovered Tweet
     */
     public void publishTweet(String publisher, String text) {
-        if (publisher != null && publisher.length() > 0 && text != null && text.length() > 0 && text.length() < 140) {
+
+    	int lenghth = getTextLengthWithoutLinks(text);
+    	if (publisher != null && publisher.length() > 0 && text != null && text.length() > 0 && getTextLengthWithoutLinks(text) < 140) {
+        	
             Tweet tweet = new Tweet();
             tweet.setTweet(text);
             tweet.setPublisher(publisher);
@@ -40,6 +45,41 @@ public class TweetService {
             throw new IllegalArgumentException("Tweet must not be greater than 140 characters");
         }
     }
+    
+    public void discardTweet(Long id)
+    {
+    	Tweet tweet = this.entityManager.find(Tweet.class, id);
+    	tweet.setStatus(TweetStatus.DISCARDED);
+    	this .entityManager.persist(tweet);
+    }
+    
+    private int getTextLengthWithoutLinks(String text)
+    {
+    	return (text.length() - obtainPatternsLength(text,"http://"," ") - obtainPatternsLength(text,"https://"," "));
+    	
+    }
+    
+    
+    private int obtainPatternsLength(String text, String startWithStr, String endsWithStr)
+    {
+    	int patternLength = 0;
+    	int ini =0;
+    	int end=0;
+    	
+    	while ((ini = text.indexOf(startWithStr,end))!=-1)
+    	{
+    		
+    		end = text.indexOf(endsWithStr,ini);
+    		if (end==-1) end=text.length();
+
+    		patternLength+=(end-ini);
+    		
+    	}
+
+    	return patternLength;
+    	
+    }
+    
 
     /**
       Recover tweet from repository
