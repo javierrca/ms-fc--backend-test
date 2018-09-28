@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -32,12 +33,13 @@ public class TweetService {
     */
     public void publishTweet(String publisher, String text) {
 
-    	int lenghth = getTextLengthWithoutLinks(text);
+
     	if (publisher != null && publisher.length() > 0 && text != null && text.length() > 0 && getTextLengthWithoutLinks(text) < 140) {
         	
             Tweet tweet = new Tweet();
             tweet.setTweet(text);
             tweet.setPublisher(publisher);
+            
 
             this.metricWriter.increment(new Delta<Number>("published-tweets", 1));
             this.entityManager.persist(tweet);
@@ -49,9 +51,15 @@ public class TweetService {
     public void discardTweet(Long id)
     {
     	Tweet tweet = this.entityManager.find(Tweet.class, id);
-    	tweet.setStatus(TweetStatus.DISCARDED);
-    	this .entityManager.persist(tweet);
+    	if (tweet!=null)
+    	{
+	    	tweet.setStatus(TweetStatus.DISCARDED);
+	    	tweet.setDiscardDate(new Date());
+	    	this .entityManager.persist(tweet);
+    	}
+    	
     }
+   
     
     private int getTextLengthWithoutLinks(String text)
     {
@@ -72,7 +80,7 @@ public class TweetService {
     		end = text.indexOf(endsWithStr,ini);
     		if (end==-1) end=text.length();
 
-    		patternLength+=(end-ini);
+    		patternLength+=(end-ini+1);
     		
     	}
 
@@ -98,11 +106,23 @@ public class TweetService {
     public List<Tweet> listAllTweets() {
         List<Tweet> result = new ArrayList<Tweet>();
         this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
-        TypedQuery<Long> query = this.entityManager.createQuery("SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 ORDER BY id DESC", Long.class);
+        TypedQuery<Long> query = this.entityManager.createQuery("SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 and (status is null or status<>'DISCARDED') ORDER BY id DESC", Long.class);
         List<Long> ids = query.getResultList();
         for (Long id : ids) {
             result.add(getTweet(id));
         }
         return result;
     }
+    
+    public List<Tweet> listDiscardedTweets() {
+        List<Tweet> result = new ArrayList<Tweet>();
+        this.metricWriter.increment(new Delta<Number>("times-queried-discarded-tweets", 1));
+        TypedQuery<Long> query = this.entityManager.createQuery("SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 and status ='DISCARDED' ORDER BY discardDate DESC", Long.class);
+        List<Long> ids = query.getResultList();
+        for (Long id : ids) {
+            result.add(getTweet(id));
+        }
+        return result;
+    }
+    
 }

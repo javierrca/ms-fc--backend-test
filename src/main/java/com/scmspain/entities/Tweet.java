@@ -1,11 +1,15 @@
 package com.scmspain.entities;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 public class Tweet {
@@ -14,7 +18,7 @@ public class Tweet {
     private Long id;
     @Column(nullable = false)
     private String publisher;
-    @Column(nullable = false, length = 140)
+    @Column(nullable = false, length = 1000)
     private String tweet;
     @Column (nullable=true)
     private Long pre2015MigrationStatus = 0L;
@@ -23,10 +27,22 @@ public class Tweet {
     @Enumerated(EnumType.STRING)
     private TweetStatus status;
 
+    @Column (nullable=true)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private Date discardDate;
+    
 	public Tweet() {
     }
 
-    public Long getId() {
+    public Date getDiscardDate() {
+		return discardDate;
+	}
+
+	public void setDiscardDate(Date discardDate) {
+		this.discardDate = discardDate;
+	}
+
+	public Long getId() {
         return id;
     }
 

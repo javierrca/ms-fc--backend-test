@@ -11,6 +11,7 @@ import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 public class TweetController {
@@ -33,11 +34,15 @@ public class TweetController {
 
     
     @PostMapping("/discarded")
-    @ResponseStatus(CREATED)
+    @ResponseStatus(OK)
     public void discardTweet(@RequestBody DiscardTweetCommand discardTweetCommand) {
         this.tweetService.discardTweet(new Long(discardTweetCommand.getTweet()));
     }
 
+    @GetMapping("/discarded")
+    public List<Tweet> listDiscardedTweets() {
+        return this.tweetService.listDiscardedTweets();
+    }
     
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(BAD_REQUEST)

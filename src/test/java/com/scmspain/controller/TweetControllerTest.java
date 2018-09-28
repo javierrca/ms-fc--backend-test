@@ -41,12 +41,27 @@ public class TweetControllerTest {
             .andExpect(status().is(201));
     }
 
+
     @Test
     public void shouldReturn400WhenInsertingAnInvalidTweet() throws Exception {
-        mockMvc.perform(newTweet("Schibsted Spain", "We are Schibsted Spain (look at our home page http://www.schibsted.es/), we own Vibbo, InfoJobs, fotocasa, coches.net and milanuncios. Welcome!"))
+        mockMvc.perform(newTweet("Schibsted Spain", "We are Schibsted Spain (look at our home page , we own Vibbo, InfoJobs, fotocasa, coches.net, Vibbo, InfoJobs, fotocasa, coches.net,Vibbo, InfoJobs, fotocasa, coches.net and milanuncios. Welcome!"))
                 .andExpect(status().is(400));
     }
 
+    @Test
+    public void shouldReturn200WhenInsertingValidTweetWithLinks() throws Exception {
+        mockMvc.perform(newTweet("Schibsted Spain", "We are Schibsted Spain (look at our home page http://www.schibsted.es/), we own Vibbo, InfoJobs, fotocasa, coches.net and milanuncios. Welcome!"))
+                .andExpect(status().is(201));
+    }
+    
+    @Test
+    public void shouldReturn200WhenDiscardingTweet() throws Exception {
+        mockMvc.perform(newTweet("Prospect", "Breaking the law"))
+            .andExpect(status().is(201));
+        
+        mockMvc.perform(discardTweet(new Long(1).longValue())).andExpect(status().is(200));        
+    }    
+    
     @Test
     public void shouldReturnAllPublishedTweets() throws Exception {
         mockMvc.perform(newTweet("Yo", "How are you?"))
@@ -60,10 +75,32 @@ public class TweetControllerTest {
         assertThat(new ObjectMapper().readValue(content, List.class).size()).isEqualTo(1);
     }
 
+    @Test
+    public void shouldReturnAllDiscardedTweets() throws Exception {
+        mockMvc.perform(newTweet("Yo", "How are you?"))
+                .andExpect(status().is(201));
+
+        mockMvc.perform(discardTweet(1))
+        .andExpect(status().is(200));
+
+        
+        MvcResult getResult = mockMvc.perform(get("/discarded"))
+                .andExpect(status().is(200))
+                .andReturn();
+
+        String content = getResult.getResponse().getContentAsString();
+        assertThat(new ObjectMapper().readValue(content, List.class).size()).isEqualTo(1);
+    }    
     private MockHttpServletRequestBuilder newTweet(String publisher, String tweet) {
         return post("/tweet")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(format("{\"publisher\": \"%s\", \"tweet\": \"%s\"}", publisher, tweet));
     }
+    
+    private MockHttpServletRequestBuilder discardTweet(long id) {
+        return post("/discarded")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(format("{ \"tweet\": %d}", id));
+    }    
 
 }
